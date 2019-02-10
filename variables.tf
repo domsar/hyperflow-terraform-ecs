@@ -75,12 +75,17 @@ variable "hyperflow_worker_container"
   default = "krysp89/hyperflow-worker-nfs:latest"
 }
 
+variable "hyperflow_app_container"
+{
+  default = "krysp89/hyperflow-montage:latest"
+}
+
 variable "ec2_status_reporter"
 {
   default = "krysp89/hyperflow-ec2-status-reporter:latest"
 }
 
-#change to "ENABLED" for feature to start working 
+#change to "ENABLED" for feature to start working
 variable "feature_download"
 {
   default = "DISABLED"

@@ -8,6 +8,11 @@ variable "server_plugin_port" {
   default = 15672
 }
 
+variable "app_port" {
+  description = "The port for app"
+  default = 80
+}
+
 variable "master_count"
 {
     default = 1
@@ -54,7 +59,7 @@ variable alarm_high_period
     default = 10
 }
 
-## 
+##
 variable alarm_threshold_high
 {
     default = 700

@@ -1,0 +1,15 @@
+[
+    {
+      "essential": true,
+      "image": "${image_url}",
+      "name": "${container_name}",
+      "networkMode": "awsvpc",
+      "portMappings": [
+        {
+          "hostPort": ${container_port},
+          "protocol": "tcp",
+          "containerPort": ${host_port}
+        }
+      ],
+    }
+]

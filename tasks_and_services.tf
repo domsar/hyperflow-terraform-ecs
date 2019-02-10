@@ -18,7 +18,7 @@ data "template_file" "task_definition_hyperflow_worker" {
 resource "aws_ecs_task_definition" "task_hyperflow_worker" {
   family                = "task_definition_hyperflow_worker"
   container_definitions = "${data.template_file.task_definition_hyperflow_worker.rendered}"
-  
+
 
   volume {
     name      = "tmp-storage"
@@ -46,6 +46,58 @@ resource "aws_ecs_service" "hyperflow-service-worker" {
     "aws_ecs_service.hyperflow-service-master",
   ]
 }
+
+# FARGATE
+
+data "template_file" "task_definition_hyperflow_app" {
+  template = "${file("${path.module}/task-hyperflow-app.json")}"
+  vars {
+    image_url = "${var.hyperflow_app_container}"
+    container_name = "hyperflow-app"
+    host_port         = "${var.app_port}"
+    container_port    = "${var.app_port}"
+  }
+}
+
+# The following settings are required for a task that will run in Fargate:
+#   requires_compatibilities,
+#   network_mode,
+#   cpu,
+#   memory.
+
+resource "aws_ecs_task_definition" "task_hyperflow_app" {
+  family                   = "task_definition_hyperflow_app"
+  container_definitions    = "${data.template_file.task_definition_hyperflow_app.rendered}"
+  network_mode             = "awsvpc"
+  cpu                      = "256"
+  memory                   = "512"
+  requires_compatibilities = ["FARGATE"]
+  execution_role_arn       = "${aws_iam_role.ecs_tasks_execution_role.arn}"
+}
+
+resource "aws_ecs_service" "hyperflow-service-app" {
+  name            = "hyperflow-service-app"
+  cluster         = "${aws_ecs_cluster.hyperflow_cluster.id}"
+  task_definition = "${aws_ecs_task_definition.task_hyperflow_app.arn}"
+  desired_count   = "${var.aws_ecs_service_app_desired_count}"
+
+  load_balancer = {
+    target_group_arn = "${aws_alb_target_group.main.arn}"
+    container_name   = "hyperflow-service-app"
+    container_port   = "${var.app_port}"
+  }
+
+  launch_type = "FARGATE"
+
+  network_configuration {
+    security_groups = ["${aws_security_group.awsvpc_sg.id}"]
+    subnets         = ["${module.vpc.private_subnets}"]
+  }
+
+  depends_on = ["aws_alb_listener.main"]
+}
+
+# FARGATE
 
 data "template_file" "task_definition_hyperflow_master" {
   template = "${file("${path.module}/task-hyperflow-master.json")}"
